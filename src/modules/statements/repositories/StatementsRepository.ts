@@ -1,7 +1,9 @@
+import { OperationType } from './../entities/Statement';
 import { getRepository, Repository } from "typeorm";
 
 import { Statement } from "../entities/Statement";
 import { ICreateStatementDTO } from "../useCases/createStatement/ICreateStatementDTO";
+import { ICreateTransferDTO } from "../useCases/createTransfers/ICreateTransferDTO";
 import { IGetBalanceDTO } from "../useCases/getBalance/IGetBalanceDTO";
 import { IGetStatementOperationDTO } from "../useCases/getStatementOperation/IGetStatementOperationDTO";
 import { IStatementsRepository } from "./IStatementsRepository";
@@ -35,10 +37,7 @@ export class StatementsRepository implements IStatementsRepository {
     });
   }
 
-  async getUserBalance({ user_id, with_statement = false }: IGetBalanceDTO):
-    Promise<
-      { balance: number } | { balance: number, statement: Statement[] }
-    >
+  async getUserBalance({ user_id, with_statement = false }: IGetBalanceDTO): Promise<{ balance: number } | { balance: number, statement: Statement[] }>
   {
     const statement = await this.repository.find({
       where: { user_id }
@@ -61,4 +60,20 @@ export class StatementsRepository implements IStatementsRepository {
 
     return { balance }
   }
+
+  async transfer({amount, description, user_id, receiving_user_id }: ICreateTransferDTO): Promise<Statement> {
+    let typeOP: OperationType = OperationType.TRANSFER;
+    
+    const transfer = this.repository.create({
+      amount, 
+      description, 
+      sander_id: receiving_user_id,
+      user_id,
+      type: typeOP
+      
+    });
+
+    return this.repository.save(transfer);
+  }
+  
 }
